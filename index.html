@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Online Retail II dashboard</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+:root{--bg:#F5F7F6;--panel:#FFFFFF;--ink:#10303C;--mute:#5F7480;--line:#DCE4E6;--a:#10303C;--b:#F2A900;--c:#2A9D8F;--r:#D1495B;--band:#FCF1D2;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0C1A21;--panel:#132731;--ink:#E8F0F2;--mute:#8CA3AD;--line:#244250;--a:#7FC8D9;--band:#2B2A17}}
+:root[data-theme="dark"]{--bg:#0C1A21;--panel:#132731;--ink:#E8F0F2;--mute:#8CA3AD;--line:#244250;--a:#7FC8D9;--band:#2B2A17}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 48px}
+h1,h2,.big{font-family:"Bricolage Grotesque",system-ui,sans-serif;margin:0}
+h1{font-size:clamp(26px,4vw,38px);line-height:1.1}
+.sub{color:var(--mute);margin:6px 0 22px;max-width:62ch}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:20px}
+.kpi{background:var(--panel);padding:14px 16px}.kpi .big{font-size:24px;font-weight:700}.kpi span{color:var(--mute);font-size:13px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:16px;min-width:0}
+.hero{padding:22px}.row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+h2{font-size:19px}.note{color:var(--mute);font-size:13px;margin:4px 0 0}
+.ctl{display:flex;gap:6px;flex-wrap:wrap}
+button{font:inherit;font-size:13px;border:1px solid var(--line);background:transparent;color:var(--ink);padding:5px 12px;border-radius:999px;cursor:pointer}
+button[aria-pressed=true]{background:var(--a);color:var(--panel);border-color:var(--a)}
+button:focus-visible{outline:2px solid var(--b);outline-offset:2px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid .panel{margin:0}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+svg{width:100%;height:auto;display:block}.ax{fill:var(--mute);font-size:11px}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);padding:6px 10px;border-radius:6px;font-size:12px;opacity:0;transition:opacity .1s;white-space:nowrap;z-index:5}
+.bar{display:grid;grid-template-columns:130px 1fr 74px;gap:10px;align-items:center;margin:7px 0;font-size:13px}
+.track{background:var(--line);height:12px;border-radius:6px;overflow:hidden}.fill{height:100%;border-radius:6px}
+.val{text-align:right;font-variant-numeric:tabular-nums}
+.ins{margin:0;padding-left:18px}.ins li{margin:6px 0}
+</style></head><body><div class="wrap">
+<h1>Online Retail II: where the revenue comes from</h1>
+<p class="sub">Two years of UK gift-ware wholesale sales (Dec 2009 to Dec 2011). Valid sales only; same-day cancelled orders removed. Figures in GBP.</p>
+<div class="kpis" id="kpis"></div>
+<section class="panel hero"><div class="row"><div><h2>Monthly revenue</h2><p class="note">Shaded months are the Sep-Nov peak. December points are partial months (data stops 23 Dec / 9 Dec).</p></div>
+<div class="ctl" id="ctl"><button data-m="g" aria-pressed="true">Gross</button><button data-m="n" aria-pressed="false">Net of returns</button><span style="width:10px"></span><button data-y="all" aria-pressed="true">All</button><button data-y="2010" aria-pressed="false">2010</button><button data-y="2011" aria-pressed="false">2011</button></div></div>
+<div style="position:relative"><svg id="hero" viewBox="0 0 900 300" role="img" aria-label="Monthly revenue line chart"></svg><div class="tip" id="tip"></div></div></section>
+<div class="grid"><section class="panel"><div class="row"><div><h2>Export markets</h2><p class="note" id="cn"></p></div></div><div id="cty"></div></section>
+<section class="panel"><div class="row"><div><h2>Customer segments</h2><p class="note">Share of revenue vs share of customers (RFM)</p></div></div><div id="seg"></div></section>
+<section class="panel"><div class="row"><div><h2>Revenue by weekday</h2><p class="note">Saturday is almost closed</p></div></div><svg id="wd" viewBox="0 0 420 190"></svg></section>
+<section class="panel"><div class="row"><div><h2>Revenue by hour</h2><p class="note">Midday carries the day</p></div></div><svg id="hr" viewBox="0 0 420 190"></svg></section></div>
+<section class="panel" style="margin-top:16px"><h2>What to act on</h2><ul class="ins" id="ins"></ul></section></div>
+<script>
+const D={"k":{"gross_revenue":19313967.84,"net_revenue":18926266.18,"orders":39449,"aov":489.59,"identified_customers":5851,"return_rate_pct":2.01,"uk_share_pct":85.31,"yoy_jan_nov_pct":2.31,"repeat_customer_rate_pct":72.3,"top20pct_customers_revenue_share_pct":76.81,"sep_nov_2010_share_pct":36.2},"m":[["2009-12",794945,778180,1662],["2010-01",611948,604806,1047],["2010-02",537479,525318,1186],["2010-03",760596,752062,1645],["2010-04",644658,636208,1433],["2010-05",629728,606281,1476],["2010-06",690814,670071,1610],["2010-07",628387,615883,1505],["2010-08",672200,661639,1399],["2010-09",863924,841538,1786],["2010-10",1086663,1068907,2242],["2010-11",1424608,1394454,2713],["2010-12",773433,758024,1547],["2011-01",591367,578837,1080],["2011-02",507594,499406,1091],["2011-03",687540,679246,1438],["2011-04",514050,482039,1233],["2011-05",739810,730966,1667],["2011-06",735622,723845,1522],["2011-07",686916,676738,1450],["2011-08",724010,701270,1338],["2011-09",1024070,1011333,1816],["2011-10",1093021,1061698,2001],["2011-11",1444806,1427121,2748],["2011-12",445780,440396,814]],"c":[["United Kingdom",16477377,85.31,456],["EIRE",620058,3.21,1069],["Netherlands",549773,2.85,2545],["Germany",383169,1.98,509],["France",310024,1.61,518],["Australia",167498,0.87,1948],["Spain",97767,0.51,679],["Switzerland",94025,0.49,1106],["Sweden",86319,0.45,872],["Denmark",67423,0.35,1605],["Belgium",56993,0.3,399]],"s":[["Champions",1390,11615216,23.76,69.39],["Loyal",1189,2455661,20.32,14.67],["Recent / New",509,273656,8.7,1.63],["Need Attention",423,268931,7.23,1.61],["At Risk",705,1429618,12.05,8.54],["Lost / Hibernating",1635,696760,27.94,4.16]],"w":[["Mon",3397710],["Tue",3789308],["Wed",3370523],["Thu",3976415],["Fri",2990302],["Sat",9803],["Sun",1779908]],"h":[[6,4],[7,75030],[8,509768],[9,1523179],[10,2423696],[11,2413659],[12,2775866],[13,2472011],[14,2214120],[15,2219801],[16,1454814],[17,806567],[18,262573],[19,123997],[20,38883]]};const K=D.k,$=id=>document.getElementById(id);
+const gbp=n=>"£"+Math.round(n).toLocaleString("en-GB"),M=n=>"£"+(n/1e6).toFixed(2)+"M",css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+$("kpis").innerHTML=[[M(K.gross_revenue),"Gross revenue"],[M(K.net_revenue),"Net of returns"],[K.orders.toLocaleString(),"Orders"],[gbp(K.aov),"Average order"],[K.identified_customers.toLocaleString(),"Identified customers"],[K.return_rate_pct.toFixed(1)+"%","Return rate"]].map(a=>`<div class="kpi"><div class="big">${a[0]}</div><span>${a[1]}</span></div>`).join("");
+let met="g",yr="all";
+function hero(){const rows=D.m.filter(r=>yr=="all"||r[0].startsWith(yr)),W=900,H=300,L=56,R=16,T=14,B=34,mx=Math.max(...D.m.map(r=>r[1]))*1.08,n=rows.length;
+const x=i=>L+(n==1?0:i*(W-L-R)/(n-1)),y=v=>T+(H-T-B)*(1-v/mx),val=r=>met=="g"?r[1]:r[2];
+let s="";for(let t=0;t<=4;t++){const v=mx*t/4;s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="${css("--line")}"/><text class="ax" x="${L-8}" y="${y(v)+4}" text-anchor="end">£${(v/1e6).toFixed(1)}M</text>`}
+const bw=n>1?(W-L-R)/(n-1):40;rows.forEach((r,i)=>{const mo=+r[0].slice(5);if(mo>=9&&mo<=11)s+=`<rect x="${x(i)-bw/2}" y="${T}" width="${bw}" height="${H-T-B}" fill="${css("--band")}"/>`;if(n<=14||mo%3==1)s+=`<text class="ax" x="${x(i)}" y="${H-12}" text-anchor="middle">${r[0].slice(2)}</text>`});
+const pts=rows.map((r,i)=>x(i)+","+y(val(r))).join(" ");
+s+=`<polygon points="${x(0)},${y(0)} ${pts} ${x(n-1)},${y(0)}" fill="${css("--a")}" opacity=".08"/><polyline points="${pts}" fill="none" stroke="${css("--a")}" stroke-width="2.5" stroke-linejoin="round"/>`;
+rows.forEach((r,i)=>{const dec=r[0].endsWith("-12");s+=`<circle cx="${x(i)}" cy="${y(val(r))}" r="${dec?4:3.5}" fill="${dec?css("--panel"):css("--b")}" stroke="${dec?css("--b"):css("--a")}" stroke-width="2" data-i="${i}"/>`});
+$("hero").innerHTML=s;const tip=$("tip");$("hero").querySelectorAll("circle").forEach(c=>{const r=rows[+c.dataset.i];const show=e=>{const b=$("hero").getBoundingClientRect(),k=b.width/W;tip.innerHTML=`<b>${r[0]}</b><br>${gbp(val(r))} · ${r[3].toLocaleString()} orders`;tip.style.left=Math.min(c.cx.baseVal.value*k+8,b.width-140)+"px";tip.style.top=(c.cy.baseVal.value*k-44)+"px";tip.style.opacity=1};c.addEventListener("mouseenter",show);c.addEventListener("focus",show);c.addEventListener("mouseleave",()=>tip.style.opacity=0);c.setAttribute("tabindex","0")})}
+document.querySelectorAll("#ctl button").forEach(b=>b.onclick=()=>{const g=b.dataset.m?"m":"y";document.querySelectorAll(`#ctl button[data-${g}]`).forEach(x=>x.setAttribute("aria-pressed",x==b));if(g=="m")met=b.dataset.m;else yr=b.dataset.y;hero()});
+function bars(el,rows,col,fmt){const mx=Math.max(...rows.map(r=>r[1]));$(el).innerHTML=rows.map(r=>`<div class="bar"><span>${r[0]}</span><div class="track"><div class="fill" style="width:${r[1]/mx*100}%;background:${col}"></div></div><span class="val">${fmt(r)}</span></div>`).join("")}
+const nuk=D.c.filter(r=>r[0]!="United Kingdom").slice(0,10);bars("cty",nuk,css("--a"),r=>M(r[1]));$("cn").textContent=`The UK is ${K.uk_share_pct.toFixed(0)}% of revenue and is excluded here. Export orders average more than UK orders.`;
+$("seg").innerHTML=D.s.map(r=>`<div style="margin:10px 0"><div style="display:flex;justify-content:space-between;font-size:13px"><b>${r[0]}</b><span>${r[1].toLocaleString()} customers</span></div><div class="track" title="Revenue share"><div class="fill" style="width:${r[4]}%;background:var(--b)"></div></div><div class="track" style="height:6px;margin-top:3px" title="Customer share"><div class="fill" style="width:${r[3]}%;background:var(--c)"></div></div><div class="note">${r[4].toFixed(1)}% of revenue · ${r[3].toFixed(1)}% of customers</div></div>`).join("");
+function cols(el,rows,col,lab){const W=420,H=190,mx=Math.max(...rows.map(r=>r[1])),bw=W/rows.length;$(el).innerHTML=rows.map((r,i)=>{const h=r[1]/mx*(H-34);return `<rect x="${i*bw+bw*.15}" y="${H-22-h}" width="${bw*.7}" height="${h}" rx="3" fill="${col}"/><text class="ax" x="${i*bw+bw/2}" y="${H-6}" text-anchor="middle">${lab(r)}</text>`}).join("")}
+cols("wd",D.w,css("--a"),r=>r[0]);cols("hr",D.h,css("--c"),r=>r[0]%2?"":r[0]);
+const ch=D.s.find(r=>r[0]=="Champions"),ar=D.s.find(r=>r[0]=="At Risk");
+$("ins").innerHTML=[`Stock and staff for autumn: Sep-Nov brought ${K.sep_nov_2010_share_pct.toFixed(0)}% of 2010 revenue, yet Jan-Nov 2011 grew only ${K.yoy_jan_nov_pct.toFixed(1)}%.`,`Protect the ${ch[1].toLocaleString()} Champions: ${ch[3].toFixed(0)}% of customers produce ${ch[4].toFixed(0)}% of revenue.`,`Win back the ${ar[1]} At Risk accounts holding ${M(ar[2])} of past revenue.`,`${K.repeat_customer_rate_pct.toFixed(0)}% of customers reorder, so first-order onboarding is the lever.`].map(t=>`<li>${t}</li>`).join("");
+hero();matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{hero();cols("wd",D.w,css("--a"),r=>r[0]);cols("hr",D.h,css("--c"),r=>r[0]%2?"":r[0])});
+</script></body></html>
